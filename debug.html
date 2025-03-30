@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>诊断页面</title>
+    <style>
+        body { background: #f0f0f0; font-family: Arial, sans-serif; padding: 20px; }
+        #result { background: white; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>飞行模拟器诊断</h1>
+    <div id="result">检测中...</div>
+
+    <script>
+        const resultDiv = document.getElementById('result');
+        let output = '';
+        let errorCount = 0;
+
+        // 添加诊断信息
+        function addInfo(message, isError = false) {
+            output += `<div class="${isError ? 'error' : 'success'}">${message}</div>`;
+            if (isError) errorCount++;
+        }
+
+        // 检查文件是否存在
+        async function checkFile(url) {
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                return response.ok;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // 执行诊断
+        async function runDiagnostic() {
+            // 基本环境检查
+            addInfo(`User Agent: ${navigator.userAgent}`);
+            addInfo(`屏幕分辨率: ${window.innerWidth}x${window.innerHeight}`);
+            
+            // 检查关键文件
+            const files = [
+                'index.html',
+                'main.js',
+                'assets'
+            ];
+
+            for (const file of files) {
+                const exists = await checkFile(file);
+                addInfo(`检查文件 ${file}: ${exists ? '存在' : '不存在'}`, !exists);
+            }
+
+            // 检查THREE.js可用性
+            try {
+                const module = await import('./main.js').catch(e => {
+                    addInfo(`加载main.js失败: ${e.message}`, true);
+                    throw e;
+                });
+                addInfo('main.js能够加载');
+            } catch (e) {
+                // 已在上面处理错误
+            }
+
+            // 检查控制台错误
+            if (window.console && console.error) {
+                const oldError = console.error;
+                window.consoleErrors = [];
+                console.error = function() {
+                    window.consoleErrors.push(Array.from(arguments).join(' '));
+                    oldError.apply(console, arguments);
+                };
+            }
+
+            resultDiv.innerHTML = output;
+            resultDiv.innerHTML += `<h3>诊断完成，发现${errorCount}个问题</h3>`;
+            
+            if (window.consoleErrors && window.consoleErrors.length > 0) {
+                resultDiv.innerHTML += `<h4>控制台错误:</h4><ul>`;
+                window.consoleErrors.forEach(err => {
+                    resultDiv.innerHTML += `<li class="error">${err}</li>`;
+                });
+                resultDiv.innerHTML += `</ul>`;
+            }
+        }
+
+        // 运行诊断
+        runDiagnostic();
+    </script>
+</body>
+</html> 

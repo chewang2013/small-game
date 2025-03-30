@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { defineConfig } from 'vite'
 
 // 添加在文件起始位置，import之后
 console.log('加载3D飞行模拟器...');
@@ -952,4 +953,12 @@ function createForest() {
 const forestSystem = createForest();
 scene.add(forestSystem);
 
-animate(); 
+animate();
+
+export default defineConfig({
+  base: './', // 关键配置！使用相对路径
+  build: {
+    outDir: 'dist',
+    assetsInlineLimit: 0
+  }
+}) 
